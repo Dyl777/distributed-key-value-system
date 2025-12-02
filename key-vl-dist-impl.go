@@ -71,6 +71,18 @@ func (c *LRUCache) Put(k string, v []byte) {
 }
 
 // ---------- Node methods ----------
+// NewNode constructs the runtime Node structure. It allocates the
+// internal maps and the LRU cache so subsequent goroutines can rely
+// on these being non-nil without extra checks. The function purposefully
+// does not start background goroutines: callers (e.g. main) call
+// `startServer` and then spawn background tasks. Separating allocation
+// from goroutine creation makes testing and initialization ordering
+// clearer.
+//
+// Concurrency rationale:
+//   - `mu` and `clusterMu` are zero-value (unlocked) on return; they
+//     are used by handlers and background loops.
+//   - `httpClient` is safe for concurrent use and shared by goroutines.
 func NewNode(baseURL string) *Node {
 	return &Node{
 		baseURL:    baseURL,
@@ -120,6 +132,18 @@ func (n *Node) getNodes() []string {
 }
 
 // consistent hashing: choose replicas clockwise from hashed key
+// findReplicas deterministically selects up to `replicationFactor`
+// replica base URLs for a key. It uses a hash modulo the current
+// membership size and walks clockwise. This function intentionally
+// does not take locks itself; it calls `getNodes()` which returns a
+// copy of the membership slice under `clusterMu.RLock()`. Returning a
+// snapshot avoids holding locks while doing CPU-only work and keeps
+// caller-side code simpler.
+//
+// Note on consistency: because membership can change concurrently,
+// callers should expect the replica list to be a point-in-time view.
+// The higher-level read/write logic tolerates missing replicas and
+// performs retries/repair when necessary.
 func (n *Node) findReplicas(key string) []string {
 	nodes := n.getNodes()
 	if len(nodes) == 0 {
@@ -147,6 +171,15 @@ func (n *Node) isPrimaryFor(key string) bool {
 
 // put local without network
 func (n *Node) localPut(item KVItem) {
+	// localPut acquires the exclusive `mu` lock because it performs a
+	// read-modify-write sequence on the `store` map. Maps are not
+	// concurrency-safe for simultaneous writes, and we need to compare
+	// timestamps and then conditionally update the stored value.
+	//
+	// We update the LRU cache while holding `mu`. The cache has its
+	// own mutex, so this is safe and keeps the visible state
+	// consistent: once localPut returns, both `store` and `cache` are
+	// guaranteed to reflect the written value.
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	cur, ok := n.store[item.Key]
@@ -158,6 +191,11 @@ func (n *Node) localPut(item KVItem) {
 
 // get local item
 func (n *Node) localGet(key string) (KVItem, bool) {
+	// localGet uses the read lock because multiple readers can safely
+	// access the store concurrently; writers obtaining the exclusive
+	// lock will block readers until their update completes. Returning
+	// the KVItem value as a copy (struct) avoids exposing internal
+	// pointers and keeps callers from needing to hold locks.
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 	v, ok := n.store[key]
@@ -264,6 +302,13 @@ func (n *Node) heartbeatLoop() {
 
 // attempt to pull keys for which this node is now a replica (called on startup or membership change)
 func (n *Node) rebalancePull() {
+	// rebalancePull carefully scopes locks to avoid holding them
+	// across network I/O. Holding `mu` while performing remote
+	// requests would reduce concurrency and could cause lock
+	// inversion if other functions expect to both lock and perform
+	// network calls. Instead, we enumerate peers and fetch remote
+	// metadata with no global locks and only call `localPut` (which
+	// obtains `mu`) when we have data to write.
 	nodes := n.getNodes()
 	n.mu.RLock() // we will only lookup keys after pulling
 	defer n.mu.RUnlock()

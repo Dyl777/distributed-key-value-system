@@ -126,7 +126,7 @@ func main() {
 	node.setCluster(initial)
 	node.startServer()
 
-	// --- join seed node if not first ---
+	// join seed node if not first
 	seed := initial[0]
 	if seed != me {
 		joinURL := fmt.Sprintf("%s/join", seed)
@@ -142,7 +142,7 @@ func main() {
 		}
 	}
 
-	// --- periodic rebalance/pull ---
+	// periodic rebalance/pull
 	go func() {
 		t := time.NewTicker(5 * time.Second)
 		for range t.C {

@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-// ---------- helpers ----------
+
 func hashKey(s string) uint32 {
 	return crc32.ChecksumIEEE([]byte(s))
 }
