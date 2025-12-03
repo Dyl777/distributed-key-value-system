@@ -2,7 +2,8 @@
 
 A simple, distributed key-value store implemented in Go I have currently spent 2 weeks working on it. It demonstrates
 replication (W/R quorums), membership/heartbeating, a small deterministic replica
-selection ring, last-write-wins timestamps, and an in-memory LRU cache for hot reads.
+selection ring, last-write-wins timestamps, and an in-memory LRU cache for hot reads. This project is inspired by my knowledge
+and experience in hdfs (hdfs-style commands) and big data infrastructure
 
 License: GNU GPLv3 (see file headers in source files)
 
