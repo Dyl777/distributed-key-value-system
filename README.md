@@ -173,10 +173,6 @@ intranet environments:
 - Improved NAT traversal and port-forwarding guidance: document recommended router
   settings or add an optional STUN-like mechanism for crossing NATs.
 
-If you'd like, I can add a short section describing how to bind/advertise a different
-address than the listen port (example config) and a small PowerShell script to
-demonstrate starting nodes on LAN IPs — a sample script is included at
-`scripts/start-local.ps1`.
 
 ### Example: bind to an intranet IP and advertise a different URL
 
