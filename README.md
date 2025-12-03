@@ -109,7 +109,7 @@ Cluster management endpoints:
 
 ## Reconnection & Liveness Strategy
 
-This project uses a heartbeat-driven liveness approach and a few client-side
+The program uses a heartbeat-driven liveness approach and a few client-side
 strategies to reduce false positives and improve availability during transient failures.
 
 - Heartbeat interval and failures: nodes ping peers at `-heartbeat` (default `2s`). The
@@ -150,14 +150,15 @@ startup logic in the node mode do this automatically).
 ## Notes & Caveats
 
 - This is an educational project, it does not provide strict consistency, security,
-  persistence, or production-grade cluster management.
+  persistence, or production-grade cluster management. I can
+  only improve the repo to the best of my knowledge for now
 - Tests / integration harnesses are not included by default; run multiple local nodes
   (different ports) to experiment.
 
 
 ## Planned / Future Features
 
-Planned improvements and features that would make this demo more useful in real or
+Planned improvements and features that would make it more useful in real or
 intranet environments:
 
 - Support intranet IPs and non-localhost deployments: advertise and bind to LAN
@@ -237,12 +238,9 @@ the cluster view contains the LAN addresses rather than `localhost`.
    - Implementation: document recommended port-forwarding or add a simple STUN-like
      helper service to discover public IP when needed.
 
-If you'd like, I can implement item (1) — add `-advertise` and wire it into the
-startup/join logic — and then update the script so it does not need to POST `/join`.
-
 ## Locking & Concurrency
 
-Summary of the important locks and why they exist (see `datatypes-utils.go` and `key-vl-dist-impl.go`):
+Summary of the important locks (this is the moat of the project) and why they exist (see `datatypes-utils.go` and `key-vl-dist-impl.go`):
 
 - `mu (sync.RWMutex)` on `Node`: protects the local key/value `store` map. It is used as
   an RW lock to allow many concurrent readers (`localGet`, read handlers) while writers
@@ -356,5 +354,5 @@ Benchmarking guidance:
   and keep reproducible artifacts (Docker images or pinned binaries) for fair comparisons.
 
 ### Parts I used AI
-How to implement an cache (LRUCache)
-GNU License Comments
+- How to implement an cache (LRUCache)
+- GNU License Comments
