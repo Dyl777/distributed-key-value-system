@@ -1,11 +1,8 @@
 # Distributed Key-Value System
 
-A simple, educational distributed key-value store implemented in Go. It demonstrates
+A simple, distributed key-value store implemented in Go I have currently spent 2 weeks working on it. It demonstrates
 replication (W/R quorums), membership/heartbeating, a small deterministic replica
 selection ring, last-write-wins timestamps, and an in-memory LRU cache for hot reads.
-
-This repository is intended as a demo / learning project rather than production-ready
-software.
 
 License: GNU GPLv3 (see file headers in source files)
 
@@ -151,12 +148,11 @@ startup logic in the node mode do this automatically).
 
 ## Notes & Caveats
 
-- This is an educational project. It does not provide strict consistency, security,
+- This is an educational project, it does not provide strict consistency, security,
   persistence, or production-grade cluster management.
 - Tests / integration harnesses are not included by default; run multiple local nodes
   (different ports) to experiment.
 
-(c) Demo project — see in-source file headers for full copyright & license.
 
 ## Planned / Future Features
 
@@ -271,9 +267,9 @@ Design principles used in the code base:
 - Use per-component locks (store vs cluster vs cache) so unrelated operations do not
   serialize on a single global lock.
 
-## Execution Flow (what happens when you run the common commands)
+## Execution Flow (Activity Diagram) (what happens when you run the common commands)
 
-Below is a concise step-through of what the program does in memory for the common
+Step-through of what the program does in memory for the common
 commands you run from the README examples.
 
 1) `gofmt -w .` / `go build`
